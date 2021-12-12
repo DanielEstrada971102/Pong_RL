@@ -81,7 +81,7 @@ class PongGame(Env):
 
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, game_speed=1):
+    def __init__(self, game_speed=1, render=True):
         super(PongGame, self).__init__()
 
         self.WINDOW_WIDTH = 400
@@ -95,11 +95,11 @@ class PongGame(Env):
         self.BALL_X_SPEED = game_speed
         self.BALL_Y_SPEED = 0.8 * game_speed
         
-        self.screen = pygame.display.set_mode((self.WINDOW_WIDTH, 
+        if render : self.screen = pygame.display.set_mode((self.WINDOW_WIDTH, 
                                                       self.WINDOW_HEIGHT))
 
         # Defining action and observation space
-        self.action_space = Discrete(3) # NOTMOVE, MOVEUP, MOVEDOWN
+        self.action_space = Discrete(3) # MOVEDOWN, NOTMOVE, MOVEUP
         # the object will be (paddle_1_pos, ball_X_pos, ball_Y_pos)
         low_ob = array([0, 0, 0])
         high_ob =array([self.WINDOW_HEIGHT - self.PADDLE_HEIGHT, 
@@ -211,6 +211,13 @@ class PongGame(Env):
         #update the window
         pygame.display.flip()
 
+    def close(self):
+        try:
+            if self.GAME_OVER:
+                pygame.display.quit()
+        except:
+            pass
+
     #===========================================================================
     #---The following functions define the behavior of the environment (game)---
     def updateBall(self):
@@ -246,7 +253,7 @@ class PongGame(Env):
         elif (self.BALL_X_POS >= self.WINDOW_WIDTH - self.BALL_WIDTH):
             #positive score
             self.BALL_X_DIR = -1
-            self.GAME_SCORE += 2
+            self.GAME_SCORE += 1
 
         else:
             pass
