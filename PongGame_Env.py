@@ -16,7 +16,7 @@
 from gym import Env
 from gym.spaces import Discrete, Box
 import pygame
-from numpy import random, array, float32
+from numpy import random, array, uint8
 
 #RGB colors for our paddle and ball
 WHITE = (255, 255, 255)
@@ -100,12 +100,13 @@ class PongGame(Env):
 
         # Defining action and observation space
         self.action_space = Discrete(3) # MOVEDOWN, NOTMOVE, MOVEUP
-        # the object will be (paddle_1_pos, ball_X_pos, ball_Y_pos)
-        low_ob = array([0, 0, 0])
+        # the object will be (paddle_1_pos, ball_X_pos, ball_Y_pos, ball_X_dir, ball_Y_dir)
+        low_ob = array([0, 0, 0, -1, -1])
         high_ob =array([self.WINDOW_HEIGHT - self.PADDLE_HEIGHT, 
                         self.WINDOW_WIDTH- self.BALL_WIDTH, 
-                        self.WINDOW_HEIGHT - self.BALL_HEIGHT])
-        self.observation_space = Box(low_ob, high_ob, shape=(3,), dtype=float32)
+                        self.WINDOW_HEIGHT - self.BALL_HEIGHT,
+                        1, 1])
+        self.observation_space = Box(low_ob, high_ob, shape=(5,), dtype=uint8)
 
 
     #===========================================================================
@@ -141,13 +142,15 @@ class PongGame(Env):
         self.PADDLE_1_POS = self.WINDOW_HEIGHT / 2 - self.PADDLE_HEIGHT / 2
         self.PADDLE_2_POS = self.WINDOW_HEIGHT / 2 - self.PADDLE_HEIGHT / 2
 
-        self.GAME_SCORE = 0
+        self.PREVIOUS_GAME_SCORE = 0
+        self.CURRENT_GAME_SCORE = 0
         self.GAME_OVER = 0
 
-        state = [self.PADDLE_1_POS, self.BALL_X_POS, self.BALL_Y_POS]
+        state = [self.PADDLE_1_POS, self.BALL_X_POS, self.BALL_Y_POS, 
+                self.BALL_X_DIR, self.BALL_Y_DIR]
 
         #important : the observation must be a numpy array
-        return array(state).astype(float32)        
+        return array(state).astype(uint8)        
 
 
     def step(self, action):
@@ -170,13 +173,19 @@ class PongGame(Env):
         self.updatePaddle2()
         self.updateBall()
 
-        state = [self.PADDLE_1_POS, self.BALL_X_POS, self.BALL_Y_POS]
+        state = [self.PADDLE_1_POS, self.BALL_X_POS, self.BALL_Y_POS, 
+                self.BALL_X_DIR, self.BALL_Y_DIR]
 
         done = bool(self.GAME_OVER == True)
-        reward  = self.GAME_SCORE
+        
+        dif_SCORE = self.CURRENT_GAME_SCORE-self.PREVIOUS_GAME_SCORE
+        
+        reward = self.CURRENT_GAME_SCORE
+        
+        self.PREVIOUS_GAME_SCORE = self.CURRENT_GAME_SCORE
         info = {}
 
-        return array(state).astype(float32), reward, done, info
+        return array(state).astype(uint8), reward, done, info
 
 
     def render(self, mode='human'):
@@ -196,7 +205,7 @@ class PongGame(Env):
 
         pygame.font.init()
         font = pygame.font.SysFont('Consolas', 30)
-        textScore = font.render('SCORE : {}'.format(self.GAME_SCORE), True, WHITE)
+        textScore = font.render('SCORE : {}'.format(self.CURRENT_GAME_SCORE), True, WHITE)
         self.screen.blit(textScore,(self.WINDOW_WIDTH/4,self.PADDLE_BUFFER))
 
         #update our paddle
@@ -235,7 +244,7 @@ class PongGame(Env):
             self.BALL_Y_POS - self.BALL_HEIGHT <= self.PADDLE_1_POS + self.PADDLE_HEIGHT):
             #switches directions
             self.BALL_X_DIR = 1
-            self.GAME_SCORE += 1
+            self.CURRENT_GAME_SCORE += 1
         
         #past it, the game over...
         elif (self.BALL_X_POS <= 0):
@@ -253,7 +262,7 @@ class PongGame(Env):
         elif (self.BALL_X_POS >= self.WINDOW_WIDTH - self.BALL_WIDTH):
             #positive score
             self.BALL_X_DIR = -1
-            self.GAME_SCORE += 1
+            self.CURRENT_GAME_SCORE += 1
 
         else:
             pass
