@@ -1,2 +1,0 @@
-model_checkpoint_path: "cem_PongGame_CEM_params.h5f"
-all_model_checkpoint_paths: "cem_PongGame_CEM_params.h5f"
