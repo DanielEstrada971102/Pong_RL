@@ -17,6 +17,8 @@ from gym import Env
 from gym.spaces import Discrete, Box
 import pygame
 from numpy import random, array, uint8
+from typing import Optional
+from gym.utils import seeding
 
 #RGB colors for our paddle and ball
 WHITE = (255, 255, 255)
@@ -79,9 +81,10 @@ class PongGame(Env):
 
     """
 
-    metadata = {'render.modes': ['human', 'ansi']}
+    metadata = {'render.modes': ['human']}
+    reward_range = (0, float("inf"))
 
-    def __init__(self, game_speed=1, render=True):
+    def __init__(self, game_speed=1):
         super(PongGame, self).__init__()
 
         self.WINDOW_WIDTH = 400
@@ -95,8 +98,7 @@ class PongGame(Env):
         self.BALL_X_SPEED = game_speed
         self.BALL_Y_SPEED = 0.8 * game_speed
         
-        if render : self.screen = pygame.display.set_mode((self.WINDOW_WIDTH, 
-                                                      self.WINDOW_HEIGHT))
+        self.screen  = None
 
         # Defining action and observation space
         self.action_space = Discrete(3) # MOVEDOWN, NOTMOVE, MOVEUP
@@ -117,7 +119,7 @@ class PongGame(Env):
     # --> (Optional) render(method='human')
     # and the last two attributes above --> action_space and observation_space
 
-    def reset(self):
+    def reset(self, seed: Optional[int] = None):
         """
         This function resets the environment to an initial state and returns an initial
         observation. In other words, it sets the initial configuration of the 
@@ -130,6 +132,8 @@ class PongGame(Env):
         -------
         - observation (object): the initial observation.
         """
+        if seed != None : super().reset(seed=seed)
+        
         # initial Ball position is chosen randomly
         self.BALL_X_POS =  self.WINDOW_WIDTH/2 - self.BALL_WIDTH/2
         self.BALL_Y_POS = random.randint(0,9)*(self.WINDOW_HEIGHT - 
@@ -145,6 +149,7 @@ class PongGame(Env):
         self.PREVIOUS_GAME_SCORE = 0
         self.CURRENT_GAME_SCORE = 0
         self.GAME_OVER = 0
+        self.reward = 0
 
         state = [self.PADDLE_1_POS, self.BALL_X_POS, self.BALL_Y_POS, 
                 self.BALL_X_DIR, self.BALL_Y_DIR]
@@ -179,10 +184,15 @@ class PongGame(Env):
         done = bool(self.GAME_OVER == True)
         
         dif_SCORE = self.CURRENT_GAME_SCORE-self.PREVIOUS_GAME_SCORE
-        
-        reward = self.CURRENT_GAME_SCORE
-        
         self.PREVIOUS_GAME_SCORE = self.CURRENT_GAME_SCORE
+
+        if not done:
+            self.reward += 0.1
+            if dif_SCORE > 0:
+                self.reward += 10
+        
+        #reward = self.CURRENT_GAME_SCORE
+        reward=self.reward        
         info = {}
 
         return array(state).astype(uint8), reward, done, info
@@ -201,7 +211,12 @@ class PongGame(Env):
         -
         """
         
-        if (mode == 'human'): 
+        if (mode == 'human'):
+            
+            if self.screen == None:
+                self.screen = pygame.display.set_mode((self.WINDOW_WIDTH, 
+                                              self.WINDOW_HEIGHT), pygame.SHOWN)
+            
             pygame.event.pump()
             self.screen.fill(BLACK)
 
@@ -221,15 +236,14 @@ class PongGame(Env):
         
             #update the window
             pygame.display.flip()
+
         else:
             pass           
         
     def close(self):
-        try:
-            if self.GAME_OVER:
-                pygame.display.quit()
-        except:
-            pass
+        if self.screen != None:
+            pygame.display.quit()
+            self.screen = None
 
     #===========================================================================
     #---The following functions define the behavior of the environment (game)---
