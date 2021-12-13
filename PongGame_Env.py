@@ -79,7 +79,7 @@ class PongGame(Env):
 
     """
 
-    metadata = {'render.modes': ['human']}
+    metadata = {'render.modes': ['human', 'ansi']}
 
     def __init__(self, game_speed=1, render=True):
         super(PongGame, self).__init__()
@@ -200,26 +200,30 @@ class PongGame(Env):
         -------
         -
         """
-        pygame.event.pump()
-        self.screen.fill(BLACK)
-
-        pygame.font.init()
-        font = pygame.font.SysFont('Consolas', 30)
-        textScore = font.render('SCORE : {}'.format(self.CURRENT_GAME_SCORE), True, WHITE)
-        self.screen.blit(textScore,(self.WINDOW_WIDTH/4,self.PADDLE_BUFFER))
-
-        #update our paddle
-        self.drawPaddle1()
         
-        #update the paddleBot
-        self.drawPaddle2()
+        if (mode == 'human'): 
+            pygame.event.pump()
+            self.screen.fill(BLACK)
 
-        #draw the ball
-        self.drawBall()
-    
-        #update the window
-        pygame.display.flip()
+            pygame.font.init()
+            font = pygame.font.SysFont('Consolas', 30)
+            textScore = font.render('SCORE : {}'.format(self.CURRENT_GAME_SCORE), True, WHITE)
+            self.screen.blit(textScore,(self.WINDOW_WIDTH/4,self.PADDLE_BUFFER))
 
+            #update our paddle
+            self.drawPaddle1()
+            
+            #update the paddleBot
+            self.drawPaddle2()
+
+            #draw the ball
+            self.drawBall()
+        
+            #update the window
+            pygame.display.flip()
+        else:
+            pass           
+        
     def close(self):
         try:
             if self.GAME_OVER:
