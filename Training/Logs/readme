@@ -1,0 +1,5 @@
+A2C_1 -> training data of the cartpole env with 20000 steps
+A2C_2 -> training data of the Pong env 1 with 80000 steps
+A2C_3 -> training data of the Pong env 2 with 80000 steps
+DQN_2 -> training data of the Pong env 1 with 80000 steps
+DQN_3 -> training data of the Pong env 2 with 80000 steps

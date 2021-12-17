@@ -1,3 +1,4 @@
+
 # Exploración inicial del entorno 
 # se desarrollan 10 episodeos ejecutando acciones aleatorias
 import os
@@ -5,7 +6,7 @@ from gym.envs.classic_control.cartpole import CartPoleEnv
 from stable_baselines3 import A2C
 
 # Ruta donde esta el modelo entrenado
-A2C_path = os.path.join("Training", "Saved_Models", "A2C")
+A2C_path = os.path.join("Training", "Saved_Models", "A2C_CartPole")
 
 env = CartPoleEnv()
 
@@ -32,7 +33,6 @@ env = CartPoleEnv()
 #-------------- Comportamiento de un agente A2 entrenado con -------------------
 
 model = A2C.load(A2C_path)
-
 episode = 1
 
 while 1:

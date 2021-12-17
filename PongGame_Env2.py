@@ -1,5 +1,5 @@
 """ ****************************************************************************
-* @file PongGame_Env.py                                                        *
+* @file PongGame_Env2.py                                                        *
 * @author Daniel Estrada (daniel.estrada1@udea.edu.co)                         *
 * @brief simple ping pong game created with pygame, this code is based on      *
 *        malreddysid's available in:                                           *
@@ -67,11 +67,11 @@ class PongGame(Env):
         ... horizontal speed of the ball
     ->  BALL_Y_SPEDD : int
         ... vertical speed of the ball
-    ->  PREVIOUS_GAME_SCORE : int
-        ... score of the game one step before.
-    ->  CURRENT_GAME_SCORE : int
+    ->  GAME_SCORE : int
         ... current score of the game. When human hits the ball, it recives +1 point
     ->  GAME_OVER : bool
+        ... the game overs when the ball reaches the left side of the window
+    ->  DONE : bool
         ... the game overs when the ball reaches the left side of the window
     ->  screen : pygame.display
         ... the game screen
@@ -133,7 +133,7 @@ class PongGame(Env):
             ... Optional seed for random generator.
         @Retuns
         -------
-        ->  observation (object): the initial observation.
+        - observation (object): the initial observation.
         """
         if seed != None : super().reset(seed=seed)
         
@@ -142,15 +142,14 @@ class PongGame(Env):
         self.BALL_Y_POS = random.randint(0,9)*(self.WINDOW_HEIGHT - 
                                                     self.BALL_HEIGHT)/9
         # initial Ball direction is chosen randomly
-        self.BALL_X_DIR = 1 # for start in the enemy direction
+        self.BALL_X_DIR = 1#random.choice([-1,1])
         self.BALL_Y_DIR = random.choice([-1,1])
 
         # initial Paddles positions are chosen in the middle 
         self.PADDLE_1_POS = self.WINDOW_HEIGHT / 2 - self.PADDLE_HEIGHT / 2
         self.PADDLE_2_POS = self.WINDOW_HEIGHT / 2 - self.PADDLE_HEIGHT / 2
 
-        self.PREVIOUS_GAME_SCORE = 0
-        self.CURRENT_GAME_SCORE = 0
+        self.GAME_SCORE = 0
         self.GAME_OVER = 0
         self.reward = 0
 
@@ -185,16 +184,15 @@ class PongGame(Env):
                 self.BALL_X_DIR, self.BALL_Y_DIR]
 
         done = bool(self.GAME_OVER == True)
-        
-        dif_SCORE = self.CURRENT_GAME_SCORE-self.PREVIOUS_GAME_SCORE
-        self.PREVIOUS_GAME_SCORE = self.CURRENT_GAME_SCORE
 
-        if not done and dif_SCORE > 0:
+        if not done:
+            if abs(self.PADDLE_1_POS + self.PADDLE_HEIGHT/2 -
+                   self.BALL_X_POS + self.BALL_WIDTH/2) >= self.PADDLE_HEIGHT/2:
                 self.reward = 1
-        elif dif_SCORE < 0:
-                self.reward = -1
+            else:
+                self.reward = 0
         else:
-            self.reward = 0
+            self.reward = -1
         
         reward=self.reward        
         info = {}
@@ -226,7 +224,7 @@ class PongGame(Env):
 
             pygame.font.init()
             font = pygame.font.SysFont('Consolas', 30)
-            textScore = font.render('SCORE : {}'.format(self.CURRENT_GAME_SCORE), True, WHITE)
+            textScore = font.render('SCORE : {}'.format(self.GAME_SCORE), True, WHITE)
             self.screen.blit(textScore,(self.WINDOW_WIDTH/4,self.PADDLE_BUFFER))
 
             #update our paddle
@@ -251,7 +249,6 @@ class PongGame(Env):
 
     #===========================================================================
     #---The following functions define the behavior of the environment (game)---
-    
     def updateBall(self):
         """
         This function implements the movement of the ball.
@@ -267,12 +264,12 @@ class PongGame(Env):
             self.BALL_Y_POS - self.BALL_HEIGHT <= self.PADDLE_1_POS + self.PADDLE_HEIGHT):
             #switches directions
             self.BALL_X_DIR = 1
-            self.CURRENT_GAME_SCORE += 1
+            self.GAME_SCORE += 1
         
         #past it, the game over...
         elif (self.BALL_X_POS <= self.PADDLE_BUFFER + self.PADDLE_WIDTH):
             self.BALL_X_DIR = 1
-            self.CURRENT_GAME_SCORE -= 1
+            self.GAME_SCORE -= 1
             self.GAME_OVER = 1 
         
         #check if hits the other side
@@ -283,10 +280,10 @@ class PongGame(Env):
             self.BALL_X_DIR = -1
             
         #past it
-        elif (self.BALL_X_POS >= self.WINDOW_WIDTH - self.PADDLE_WIDTH - self.PADDLE_BUFFER):
+        elif (self.BALL_X_POS >= self.WINDOW_WIDTH - self.PADDLE_WIDTH - self.PADDLE_BUFFER):#self.WINDOW_WIDTH - self.BALL_WIDTH):
             #positive score
             self.BALL_X_DIR = -1
-            self.CURRENT_GAME_SCORE += 1
+            self.GAME_SCORE += 1
 
         else:
             pass
@@ -343,7 +340,6 @@ class PongGame(Env):
         #dont let it hit bottom
         if (self.PADDLE_2_POS > self.WINDOW_HEIGHT - self.PADDLE_HEIGHT):
             self.PADDLE_2_POS = self.WINDOW_HEIGHT - self.PADDLE_HEIGHT
-    
     #===========================================================================
     #-------- the below functions draw in the screen the game elements ---------
     def drawBall(self):
@@ -395,7 +391,7 @@ def main():
         game.render()
         cum_reward += reward
     
-    print("reward: {}, Score: {}".format(cum_reward, game.CURRENT_GAME_SCORE))
+    print("reward: {}, Score: {}".format(cum_reward, game.GAME_SCORE))
        
 if __name__=='__main__':
     main()
